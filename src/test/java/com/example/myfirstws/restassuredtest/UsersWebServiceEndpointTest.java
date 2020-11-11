@@ -24,6 +24,7 @@ public class UsersWebServiceEndpointTest {
     private final String JSON="application/json";
     private static String userId;
     private static String authorizationHeader;
+    private static List<Map<String,String>> addresses;
     @BeforeEach
     void setUp() throws Exception {
         RestAssured.baseURI="http://localhost";
@@ -79,7 +80,7 @@ public class UsersWebServiceEndpointTest {
         String userEmail=response.jsonPath().getString("email");
         String firstName=response.jsonPath().getString("firstName");
         String lastName=response.jsonPath().getString("lastName");
-        List<Map<String,String>> addresses=response.jsonPath().getList("addresses");
+        addresses=response.jsonPath().getList("addresses");
         String addressId=addresses.get(0).get("addressId");
 
 
@@ -91,5 +92,43 @@ public class UsersWebServiceEndpointTest {
         assertTrue(addresses.size()==2);
         assertNotNull(addressId);
         assertTrue(addressId.length()==30);
+    }
+
+    /**
+     * testUpdateUserDetails()
+     * Testing the Update User Details API call
+     */
+    @Test
+    final void c(){
+
+        Map<String, String> userDetails=new HashMap<>();
+        userDetails.put("firstName","Sahar");
+        userDetails.put("lastName","PkSol");
+        userDetails.put("password","321");
+
+        Response response=given()
+                .pathParam("id",userId)
+                .header("Authorization",authorizationHeader)
+                .accept(JSON)
+                .contentType(JSON)
+                .body(userDetails)
+                .when()
+                .put(CONTEXT_PATH+"/users/{id}")
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .extract()
+                .response();
+
+        String updatedFirstName=response.jsonPath().getString("firstName");
+        String updatedLastName=response.jsonPath().getString("lastName");
+        List<Map<String, String>> storedAddresses=response.jsonPath().getList("addresses");
+
+        assertEquals("Sahar",updatedFirstName);
+        assertTrue(updatedLastName.equalsIgnoreCase("pksol"));
+        assertNotNull(storedAddresses);
+        assertTrue(addresses.size()==storedAddresses.size());
+        assertEquals(addresses.get(0).get("streetName"),storedAddresses.get(0).get("streetName"));
+
     }
 }
