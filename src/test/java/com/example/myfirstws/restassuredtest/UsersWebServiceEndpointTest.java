@@ -3,8 +3,10 @@ package com.example.myfirstws.restassuredtest;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runners.MethodSorters;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,13 +14,16 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class UsersWebServiceEndpointTest {
 
     private final String CONTEXT_PATH="/my-first-ws";
     private final String EMAIL_ADDRESS="sahar.pourkarimi@yahoo.com";
     private final String JSON="application/json";
+    private static String userId;
+    private static String authorizationHeader;
     @BeforeEach
     void setUp() throws Exception {
         RestAssured.baseURI="http://localhost";
@@ -26,14 +31,18 @@ public class UsersWebServiceEndpointTest {
 
     }
 
+    /**
+     * testUserLogin()
+     * Testing the User Login API Call
+     */
     @Test
-    final void testUserLogin(){
+    final void a(){
         Map<String,String> loginDetails=new HashMap<>();
         loginDetails.put("email",EMAIL_ADDRESS);
         loginDetails.put("password","123");
 
-        Response response=given().
-                accept(JSON)
+        Response response=given()
+                .accept(JSON)
                 .contentType(JSON)
                 .body(loginDetails)
                 .when()
@@ -41,10 +50,46 @@ public class UsersWebServiceEndpointTest {
                 .then()
                 .statusCode(200)
                 .extract().response();
-        String authorizationHeader=response.header("Authorization");
-        String userId=response.header("UserID");
+        authorizationHeader=response.header("Authorization");
+        userId=response.header("UserID");
 
         assertNotNull(authorizationHeader);
         assertNotNull(userId);
+    }
+
+    /**
+     * testGetUserDetails()
+     * Testing the Get User Details API call
+     */
+    @Test
+    final void b(){
+        Response response=given()
+                .pathParam("id",userId)
+                .header("Authorization",authorizationHeader)
+                .accept(JSON)
+                .when()
+                .get(CONTEXT_PATH+"/users/{id}")
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .extract()
+                .response();
+
+        String userPublicId=response.jsonPath().getString("userId");
+        String userEmail=response.jsonPath().getString("email");
+        String firstName=response.jsonPath().getString("firstName");
+        String lastName=response.jsonPath().getString("lastName");
+        List<Map<String,String>> addresses=response.jsonPath().getList("addresses");
+        String addressId=addresses.get(0).get("addressId");
+
+
+        assertNotNull(userPublicId);
+        assertNotNull(userEmail);
+        assertNotNull(firstName);
+        assertNotNull(lastName);
+        assertEquals(EMAIL_ADDRESS,userEmail);
+        assertTrue(addresses.size()==2);
+        assertNotNull(addressId);
+        assertTrue(addressId.length()==30);
     }
 }
