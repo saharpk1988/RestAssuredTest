@@ -129,6 +129,28 @@ public class UsersWebServiceEndpointTest {
         assertNotNull(storedAddresses);
         assertTrue(addresses.size()==storedAddresses.size());
         assertEquals(addresses.get(0).get("streetName"),storedAddresses.get(0).get("streetName"));
+    }
 
+    /**
+     * testDeleteUserDetails()
+     * Testing the Delete User Details API call
+     */
+    @Test
+    final void d(){
+        Response response=given()
+                .header("Authorization",authorizationHeader)
+                .pathParam("id",userId)
+                .accept(JSON)
+                .when()
+                .delete(CONTEXT_PATH+"/users/{id}")
+                .then()
+                .statusCode(200)
+                .contentType(JSON)
+                .extract()
+                .response();
+
+        String result=response.jsonPath().getString("operationResult");
+        assertNotNull(result);
+        assertEquals("SUCCESS",result);
     }
 }
